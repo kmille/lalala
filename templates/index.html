@@ -2,15 +2,15 @@
 
 
 <form method="POST" action="/search">
-    <input placeholder="artist" type="text" name="artist"/>
-    <input placeholder="title" type="text" name="title"/>
+    <input id="artist" placeholder="artist" type="text" name="artist"/>
+    <input id="title" placeholder="title" type="text" name="title"/>
     <input type="submit" value="search on usdb"/>
 </form>
 
 
 <form method="GET" action="http://www.youtube.com/results" target="_blank" >
-    <input placeholder="query" type="text" name="search_query"/>
-    <input type="submit" value="search on youtube"/>
+    <input hidden id="youtube-query" type="text" name="search_query"/>
+    <input type="submit" onclick="document.getElementById('youtube-query').value  = document.getElementById('artist').value + ' ' + document.getElementById('title').value" value="search on youtube"/>
 </form>
 
 </html>

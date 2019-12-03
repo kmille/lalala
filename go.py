@@ -76,9 +76,6 @@ def search_songs(artist, title):
             "limit": "300"
             }
     resp = session.post(url + "/index.php?link=list", data=data)
-    print(resp.url)
-    print(resp.request.headers)
-    print(resp.request.body)
     assert "You are not logged in. Login to use this funct" not in resp.text, "login failed"
     songs = parse_search_response(resp.text)
     return songs
