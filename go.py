@@ -2,6 +2,7 @@
 import requests
 from bs4 import BeautifulSoup
 from ipdb import set_trace
+import re
 
 session = requests.Session()
 cookies = {'ziparchiv': "", 'counter': ""}
@@ -55,13 +56,42 @@ def get_source(id):
     resp = session.post(url, data=data, params=params)
     bs = BeautifulSoup(resp.text, 'html.parser')
     src = bs.find("textarea").text
-    print(src[:500])
+    with open("data/{}.foo".format(id), "w") as f:
+        f.write(src)
+    print("Write data to data/{}.foo".format(id))
+    #print(src[:500])
     return src
 
 
+def search(artist, title):
+    params = "link=list"
+    data = f"interpret={artist}&title={title}&edition=&language=&order=views&ud=desc&limit=500"
+    resp = session.get(url, params=params, data=data)
+    set_trace()
+
+def parse_search_response():
+    with open("/tmp/test.html") as f:
+        bs = BeautifulSoup(f.read(), 'html.parser')
+        songs_part_one = bs.find_all("tr", {"class": "list_tr1"})
+        songs_part_two = bs.find_all("tr", {"class": "list_tr2"})
+        x = songs_part_two[0]
+        columns = x.findAll("td")
+        _id = re.search('\d+', columns[0].get('onclick')).group()
+        artist = columns[0].text 
+        song = columns[1].text 
+        edition = columns[2].text 
+        golden_notes = columns[3].text 
+        rating = columns[5].text 
+        views = columns[6].text 
+        set_trace()
+
 if __name__ == '__main__':
-    login()
-    get_details("5741")
-    get_source("5741")
+    #login()
+    #search("Coldplay", "")
+    parse_search_response()
+    
+    
+    #get_details("5741")
+    #get_source("5741")
 
 
