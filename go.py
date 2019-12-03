@@ -4,13 +4,15 @@ from bs4 import BeautifulSoup
 from ipdb import set_trace
 import re
 
+from flask import Flask, request, render_template
+
 session = requests.Session()
 cookies = {'ziparchiv': "", 'counter': ""}
 session.cookies.update(cookies)
 session.headers.update({'User-Agent': "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"})
 
-username = "foo@byom.de"
-password = "foofoo"
+#username = "foo2@byom.de"
+from credentials import username, password
 url = "http://usdb.animux.de"
 
 
@@ -63,32 +65,66 @@ def get_source(id):
     return src
 
 
-def search(artist, title):
-    params = "link=list"
-    data = f"interpret={artist}&title={title}&edition=&language=&order=views&ud=desc&limit=500"
-    resp = session.get(url, params=params, data=data)
-    set_trace()
+def search_songs(artist, title):
+    print(f"Searching for {artist} {title}")
+    data = {"interpret": artist,
+            "title": title,
+            "edition": "",
+            "language": "",
+            "order": "views",
+            "ud": "desc",
+            "limit": "300"
+            }
+    resp = session.post(url + "/index.php?link=list", data=data)
+    print(resp.url)
+    print(resp.request.headers)
+    print(resp.request.body)
+    assert "You are not logged in. Login to use this funct" not in resp.text, "login failed"
+    songs = parse_search_response(resp.text)
+    return songs
 
-def parse_search_response():
-    with open("/tmp/test.html") as f:
-        bs = BeautifulSoup(f.read(), 'html.parser')
-        songs_part_one = bs.find_all("tr", {"class": "list_tr1"})
-        songs_part_two = bs.find_all("tr", {"class": "list_tr2"})
-        x = songs_part_two[0]
-        columns = x.findAll("td")
-        _id = re.search('\d+', columns[0].get('onclick')).group()
-        artist = columns[0].text 
-        song = columns[1].text 
-        edition = columns[2].text 
-        golden_notes = columns[3].text 
-        rating = columns[5].text 
-        views = columns[6].text 
-        set_trace()
+
+def parse_search_response(html):
+    bs = BeautifulSoup(html, 'html.parser')
+    songs_part_one = bs.find_all("tr", {"class": "list_tr1"})
+    songs_part_two = bs.find_all("tr", {"class": "list_tr2"})
+    songs_part_one.extend(songs_part_two)
+    songs = []
+    for html_song in songs_part_one:
+        columns = html_song.findAll("td")
+        for colum in columns:
+            song = {}
+            song['id'] = re.search('\d+', columns[0].get('onclick')).group()
+            song['artist'] = columns[0].text
+            song['title'] = columns[1].text
+            song['views'] = columns[6].text
+        songs.append(song)
+    songs = sorted(songs, key=lambda x: int(x['views']), reverse=True)
+    return songs
+
+
+app = Flask(__name__)
+
+
+@app.route("/")
+def index():
+    return render_template('index.html')
+
+
+@app.route("/search", methods=["POST"])
+def search():
+    artist = request.form.get("artist", "")
+    title = request.form.get("title", "")
+    songs = search_songs(artist, title)
+    return render_template('songs.html', songs=songs)
+
+
 
 if __name__ == '__main__':
-    #login()
-    #search("Coldplay", "")
-    parse_search_response()
+    login()
+    app.run(debug=True)
+    search_songs("Coldplay", "")
+    #parse_search_response()
     
     
     #get_details("5741")

@@ -1,0 +1,26 @@
+<html>
+
+<form>
+  <input type="button" value="Go back!" onclick="history.back()">
+</form>
+
+<br>
+
+<table style="width:100%">
+  <tr>
+    <th>ID</th>
+    <th>Interpret</th>
+    <th>Title</th>
+    <th>Views</th>
+  </tr>
+  {% for song in songs %}
+  <tr>
+    <td><a href="http://usdb.animux.de/?link=detail&id={{ song['id'] }}"> {{ song['id'] }}</td>
+    <td>{{ song['artist'] }}</td>
+    <td>{{ song['title'] }}</td>
+    <td>{{ song['views'] }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+</html>
